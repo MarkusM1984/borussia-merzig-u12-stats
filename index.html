@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b6b43">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Merzig Stats">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>Borussia Merzig U12 – Live-Statistik</title>
+<style>
+:root{--green:#0b6b43;--green2:#0f8b59;--dark:#10251d;--bg:#f3f6f4;--card:#fff;--muted:#718078;--line:#dce5e0;--danger:#c43c3c;--shadow:0 6px 22px rgba(16,37,29,.09)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--dark);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{min-height:100vh}
+button,input{font:inherit}
+button{border:0;cursor:pointer}
+.app{max-width:1180px;margin:auto;padding-bottom:28px}
+.topbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#0b6b43,#075334);color:white;padding:13px 16px calc(13px + env(safe-area-inset-top));box-shadow:0 3px 15px rgba(0,0,0,.16)}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:42px;height:42px;border-radius:11px}.brand h1{font-size:17px;margin:0;font-weight:800}.brand small{opacity:.78;display:block;margin-top:2px}
+.save-dot{font-size:12px;background:rgba(255,255,255,.14);padding:7px 9px;border-radius:999px;white-space:nowrap}
+.content{padding:14px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#e4ece8;padding:5px;border-radius:13px;margin-bottom:14px}
+.tab{background:transparent;color:#496057;padding:10px;border-radius:9px;font-weight:700}.tab.active{background:white;color:var(--green);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+.game-head{display:grid;grid-template-columns:1.1fr 1fr auto;gap:10px;align-items:end}
+label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:5px}
+input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none;background:#fbfcfb}
+input:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(15,139,89,.12)}
+.primary,.secondary,.danger{padding:10px 13px;border-radius:10px;font-weight:800}.primary{background:var(--green);color:#fff}.secondary{background:#edf3f0;color:var(--green)}.danger{background:#fdecec;color:var(--danger)}
+.eighths{display:flex;gap:6px;flex-wrap:wrap}.eighth{min-width:38px;padding:9px 0;border-radius:9px;background:#eef3f1;color:#466058;font-weight:800}.eighth.active{background:var(--green);color:#fff}
+.help{font-size:12px;color:var(--muted);line-height:1.4}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:900px;background:#fff}
+th{background:#f0f5f2;color:#62736c;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:10px 7px;text-align:center;position:sticky;top:0}
+td{border-top:1px solid var(--line);padding:9px 6px;text-align:center;font-weight:700}
+td.name{text-align:left;min-width:190px}.num{color:var(--green);font-size:18px}
+.player-id{color:var(--muted);font-size:12px;margin-right:7px}
+.actions{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}.act{min-width:45px;padding:8px 7px;border-radius:8px;background:#edf3f0;color:var(--green);font-size:12px;font-weight:900}.act:active,.primary:active,.secondary:active,.danger:active{transform:scale(.96)}
+.act.plus3{background:#dff2e9}.act.eighth-ok{background:var(--green);color:white}
+.undo{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+.mobile-list{display:none}
+.roster-row{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.iconbtn{width:42px;height:42px;border-radius:10px;background:#edf3f0;color:var(--green);font-weight:900}.iconbtn.del{background:#fdecec;color:var(--danger)}
+.add-row{display:grid;grid-template-columns:80px 1fr auto;gap:8px}
+.empty{padding:30px 12px;text-align:center;color:var(--muted)}
+.saved-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding:12px 0}.saved-item:first-child{border-top:0}
+.saved-title{font-weight:800}.saved-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,120px);background:#10251d;color:white;padding:11px 15px;border-radius:999px;font-size:13px;z-index:50;transition:.2s;box-shadow:var(--shadow)}.toast.show{transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:none;padding:16px;align-items:flex-end}.modal.show{display:flex}
+.sheet{background:white;border-radius:18px 18px 0 0;width:100%;max-width:700px;margin:auto;padding:16px;max-height:85vh;overflow:auto}.sheet h2{margin:0 0 10px}
+@media(max-width:760px){
+ .content{padding:10px}.game-head{grid-template-columns:1fr 1fr}.game-head .wide{grid-column:1/-1}.game-head .buttons{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}
+ .table-wrap{display:none}.mobile-list{display:block}
+ .player-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px;margin-bottom:10px;box-shadow:0 4px 14px rgba(16,37,29,.07)}
+ .pc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.pc-name{font-weight:900}.pc-num{color:var(--muted);font-size:12px}
+ .stat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:9px}.stat{background:#f1f5f3;border-radius:8px;padding:5px 2px;text-align:center}.stat b{display:block;font-size:15px;color:var(--green)}.stat span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+ .mobile-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.mobile-actions .act{min-width:0;padding:10px 4px}
+ .roster-row{grid-template-columns:62px 1fr 42px}.add-row{grid-template-columns:70px 1fr}
+ .brand h1{font-size:15px}.save-dot{font-size:11px}
+}
+@media(min-width:761px){.card.live-card{padding:0;overflow:hidden}.live-tools{padding:14px 14px 0}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+ <div class="topbar-inner">
+  <div class="brand"><img src="icon-192.png" alt=""><div><h1>Borussia Merzig U12</h1><small>Live-Statistik</small></div></div>
+  <div class="save-dot" id="saveStatus">● gespeichert</div>
+ </div>
+</header>
+<main class="content">
+ <nav class="tabs">
+  <button class="tab active" data-tab="live">LIVE</button>
+  <button class="tab" data-tab="roster">KADER</button>
+  <button class="tab" data-tab="saved">GESPEICHERT</button>
+ </nav>
+
+ <section id="live" class="panel active">
+  <div class="card">
+   <div class="game-head">
+    <div><label>Gegner</label><input id="opponent" placeholder="z. B. TV Saarlouis"></div>
+    <div><label>Datum</label><input id="gameDate" type="date"></div>
+    <div class="buttons"><button class="primary" id="newGame">Neues Spiel</button><button class="secondary" id="saveGame">Spiel speichern</button></div>
+   </div>
+   <div style="margin-top:13px">
+    <label>Aktuelles Achtel</label>
+    <div class="eighths" id="eighths"></div>
+    <div class="help" style="margin-top:7px">Beim jeweiligen Spieler auf <b>+ A</b> tippen, wenn er in diesem Achtel gespielt hat. Ein Spieler kann pro Achtel nur einmal gezählt werden.</div>
+   </div>
+  </div>
+
+  <div class="card live-card">
+   <div class="live-tools">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div><b>Spielerstatistik</b><div class="help">Jeder Klick wird sofort gespeichert.</div></div>
+      <button class="secondary" id="undo">↩ Rückgängig</button>
+    </div>
+   </div>
+   <div id="desktopStats" class="table-wrap"></div>
+   <div id="mobileStats" class="mobile-list"></div>
+  </div>
+ </section>
+
+ <section id="roster" class="panel">
+  <div class="card">
+   <h2 style="margin:0 0 5px">Kader Borussia Merzig U12</h2>
+   <div class="help" style="margin-bottom:12px">Die Spieler werden nur einmal angelegt und bleiben für alle zukünftigen Spiele erhalten.</div>
+   <div id="rosterList"></div>
+   <div class="add-row">
+    <input id="newNumber" inputmode="numeric" placeholder="Nr.">
+    <input id="newName" placeholder="Name des Spielers">
+    <button class="primary" id="addPlayer">+ Spieler</button>
+   </div>
+  </div>
+  <div class="card">
+   <button class="danger" id="clearRoster">Kader vollständig löschen</button>
+   <div class="help" style="margin-top:8px">Nur verwenden, wenn du den Kader wirklich neu anlegen möchtest. Gespeicherte Spiele bleiben erhalten.</div>
+  </div>
+ </section>
+
+ <section id="saved" class="panel">
+  <div class="card">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h2 style="margin:0">Gespeicherte Spiele</h2><div class="help">Die Daten liegen lokal auf diesem Gerät.</div></div><button class="secondary" id="exportCurrent">Aktuelles Spiel CSV</button></div>
+   <div id="savedList" style="margin-top:10px"></div>
+  </div>
+ </section>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='merzig_u12_live_v3';
+const emptyStats=()=>({eighths:0,points:0,threes:0,rebounds:0,assists:0,turnovers:0,fouls:0,playedEighths:[]});
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+let state;
+let history=[];
+
+function defaultState(){
+ const d=new Date().toISOString().slice(0,10);
+ return {roster:[],game:{id:uid(),date:d,opponent:'',currentEighth:1,stats:{}},savedGames:[]};
+}
+function load(){
+ try{
+  const raw=localStorage.getItem(KEY);
+  state=raw?JSON.parse(raw):defaultState();
+ }catch(e){state=defaultState(); alert('Der lokale Speicher konnte nicht gelesen werden. Bitte keinen privaten Browsermodus verwenden.');}
+ state.roster=Array.isArray(state.roster)?state.roster:[];
+ state.savedGames=Array.isArray(state.savedGames)?state.savedGames:[];
+ if(!state.game) state=defaultState();
+ ensureStats();
+ renderAll();
+}
+function persist(){
+ try{localStorage.setItem(KEY,JSON.stringify(state)); document.getElementById('saveStatus').textContent='● gespeichert';}
+ catch(e){document.getElementById('saveStatus').textContent='● Speicherfehler';}
+}
+function markDirty(){document.getElementById('saveStatus').textContent='● speichert…'; persist();}
+function ensureStats(){
+ for(const p of state.roster){
+  if(!state.game.stats[p.id]) state.game.stats[p.id]=emptyStats();
+  const s=state.game.stats[p.id];
+  s.playedEighths=Array.isArray(s.playedEighths)?s.playedEighths:[];
+  ['eighths','points','threes','rebounds','assists','turnovers','fouls'].forEach(k=>s[k]=Number.isFinite(s[k])?s[k]:0);
+ }
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1300)}
+function snapshot(){return JSON.parse(JSON.stringify(state.game))}
+function pushHistory(){history.push(snapshot());if(history.length>60)history.shift()}
+function restoreSnapshot(s){state.game=s;ensureStats();persist();renderLive()}
+function mutate(playerId,field,amount,label){
+ const p=state.roster.find(x=>x.id===playerId); if(!p)return;
+ const s=state.game.stats[playerId]; pushHistory();
+ s[field]=Math.max(0,s[field]+amount);
+ markDirty(); renderLive(); toast(label+' – '+p.name);
+}
+function addEighth(playerId){
+ const s=state.game.stats[playerId]; if(!s)return;
+ const n=state.game.currentEighth;
+ if(s.playedEighths.includes(n)){toast('Dieses Achtel ist bereits gezählt');return}
+ pushHistory();s.playedEighths.push(n);s.eighths=s.playedEighths.length;
+ markDirty();renderLive();toast('Achtel gezählt');
+}
+function setEighth(n){state.game.currentEighth=n;markDirty();renderLive()}
+function renderEighths(){
+ const el=document.getElementById('eighths');el.innerHTML='';
+ for(let n=1;n<=8;n++){const b=document.createElement('button');b.className='eighth '+(n===state.game.currentEighth?'active':'');b.textContent=n;b.onclick=()=>setEighth(n);el.appendChild(b)}
+}
+function buttonsHTML(id,s){
+ const ok=s.playedEighths.includes(state.game.currentEighth);
+ return `<div class="actions">
+  <button class="act ${ok?'eighth-ok':''}" data-a="eighth" data-id="${id}">${ok?'✓ A':'+'} A</button>
+  <button class="act" data-a="p1" data-id="${id}">+1</button>
+  <button class="act" data-a="p2" data-id="${id}">+2</button>
+  <button class="act plus3" data-a="p3" data-id="${id}">+3 / 3er</button>
+  <button class="act" data-a="reb" data-id="${id}">REB +</button>
+  <button class="act" data-a="ast" data-id="${id}">AST +</button>
+  <button class="act" data-a="to" data-id="${id}">TO +</button>
+  <button class="act" data-a="foul" data-id="${id}">FOUL +</button>
+ </div>`;
+}
+function renderDesktop(){
+ const el=document.getElementById('desktopStats');
+ if(!state.roster.length){el.innerHTML='<div class="empty">Noch keine Spieler angelegt. Öffne <b>KADER</b> und füge die U12-Spieler hinzu.</div>';return}
+ let html='<table><thead><tr><th>Spieler</th><th>Achtel</th><th>Pkt</th><th>3er</th><th>REB</th><th>AST</th><th>TO</th><th>Fouls</th><th>Aktionen</th></tr></thead><tbody>';
+ for(const p of state.roster){const s=state.game.stats[p.id];html+=`<tr>
+  <td class="name"><span class="player-id">#${escapeHtml(p.number)}</span>${escapeHtml(p.name)}</td>
+  <td class="num">${s.eighths}</td><td class="num">${s.points}</td><td class="num">${s.threes}</td><td class="num">${s.rebounds}</td><td class="num">${s.assists}</td><td class="num">${s.turnovers}</td><td class="num">${s.fouls}</td>
+  <td>${buttonsHTML(p.id,s)}</td></tr>`}
+ html+='</tbody></table>';el.innerHTML=html;
+}
+function renderMobile(){
+ const el=document.getElementById('mobileStats');
+ if(!state.roster.length){el.innerHTML='<div class="empty">Noch keine Spieler angelegt. Öffne <b>KADER</b>.</div>';return}
+ let html='';
+ for(const p of state.roster){const s=state.game.stats[p.id];html+=`<div class="player-card">
+  <div class="pc-head"><div class="pc-name"><span class="pc-num">#${escapeHtml(p.number)}</span> ${escapeHtml(p.name)}</div><div class="help">Achtel ${s.eighths}/8</div></div>
+  <div class="stat-grid">
+   <div class="stat"><b>${s.eighths}</b><span>Achtel</span></div><div class="stat"><b>${s.points}</b><span>Pkt</span></div><div class="stat"><b>${s.threes}</b><span>3er</span></div><div class="stat"><b>${s.rebounds}</b><span>REB</span></div><div class="stat"><b>${s.assists}</b><span>AST</span></div><div class="stat"><b>${s.turnovers}</b><span>TO</span></div><div class="stat"><b>${s.fouls}</b><span>Foul</span></div>
+  </div>${buttonsHTML(p.id,s).replace('actions','mobile-actions')}</div>`}
+ el.innerHTML=html;
+}
+function renderLive(){
+ ensureStats();
+ document.getElementById('opponent').value=state.game.opponent||'';
+ document.getElementById('gameDate').value=state.game.date||'';
+ renderEighths();renderDesktop();renderMobile();
+}
+function renderRoster(){
+ const el=document.getElementById('rosterList');
+ if(!state.roster.length){el.innerHTML='<div class="empty">Noch keine Spieler im Kader.</div>';return}
+ el.innerHTML=state.roster.map(p=>`<div class="roster-row">
+ <input data-edit-number="${p.id}" value="${escapeAttr(p.number)}" inputmode="numeric">
+ <input data-edit-name="${p.id}" value="${escapeAttr(p.name)}">
+ <button class="iconbtn del" data-delete="${p.id}" title="Spieler löschen">×</button>
+ </div>`).join('');
+}
+function renderSaved(){
+ const el=document.getElementById('savedList');
+ if(!state.savedGames.length){el.innerHTML='<div class="empty">Noch kein Spiel gespeichert.</div>';return}
+ el.innerHTML=state.savedGames.slice().reverse().map((g,idx)=>`<div class="saved-item">
+  <div><div class="saved-title">${escapeHtml(g.opponent||'Spiel ohne Gegner')}</div><div class="saved-meta">${escapeHtml(g.date||'')} · ${g.roster.length} Spieler</div></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="secondary" data-load-game="${g.id}">Ansehen</button><button class="secondary" data-export-game="${g.id}">CSV</button><button class="secondary danger" data-delete-game="${g.id}">Löschen</button></div>
+ </div>`).join('');
+}
+function renderAll(){renderLive();renderRoster();renderSaved()}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function escapeAttr(v){return escapeHtml(v)}
+function newGame(){
+ if(state.roster.length===0){toast('Bitte zuerst den Kader anlegen');document.querySelector('[data-tab="roster"]').click();return}
+ if(!confirm('Neues Spiel starten? Die Kaderliste bleibt erhalten.'))return;
+ state.game={id:uid(),date:new Date().toISOString().slice(0,10),opponent:'',currentEighth:1,stats:{}};
+ ensureStats();history=[];persist();renderLive();toast('Neues Spiel gestartet');
+}
+function saveGame(){
+ const g=JSON.parse(JSON.stringify(state.game));
+ g.roster=JSON.parse(JSON.stringify(state.roster));
+ g.savedAt=new Date().toISOString();
+ const ix=state.savedGames.findIndex(x=>x.id===g.id);
+ if(ix>=0)state.savedGames[ix]=g;else state.savedGames.push(g);
+ persist();renderSaved();toast('Spiel gespeichert');
+}
+function csvFor(game,roster){
+ const rows=[['Nr.','Spieler','Gespielte Achtel','Punkte','Dreier','Rebounds','Assists','Turnovers','Fouls']];
+ roster.forEach(p=>{const s=game.stats[p.id]||emptyStats();rows.push([p.number,p.name,s.eighths,s.points,s.threes,s.rebounds,s.assists,s.turnovers,s.fouls])});
+ const csv=rows.map(r=>r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(';')).join('\\r\\n');
+ const blob=new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Borussia_Merzig_U12_${game.date||'Spiel'}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+document.addEventListener('click',e=>{
+ const tab=e.target.closest('.tab');if(tab){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));tab.classList.add('active');document.getElementById(tab.dataset.tab).classList.add('active');return}
+ const act=e.target.closest('[data-a]');if(act){
+  const id=act.dataset.id,a=act.dataset.a;
+  if(a==='eighth')addEighth(id);
+  if(a==='p1')mutate(id,'points',1,'+1 Punkt');
+  if(a==='p2')mutate(id,'points',2,'+2 Punkte');
+  if(a==='p3'){pushHistory();const s=state.game.stats[id];s.points+=3;s.threes+=1;markDirty();renderLive();toast('+3 Punkte / 3er')}
+  if(a==='reb')mutate(id,'rebounds',1,'Rebound');
+  if(a==='ast')mutate(id,'assists',1,'Assist');
+  if(a==='to')mutate(id,'turnovers',1,'Turnover');
+  if(a==='foul')mutate(id,'fouls',1,'Foul');
+  return
+ }
+ const del=e.target.closest('[data-delete]');if(del){const id=del.dataset.delete;if(confirm('Spieler aus dem Kader löschen?')){state.roster=state.roster.filter(p=>p.id!==id);delete state.game.stats[id];persist();renderAll();toast('Spieler gelöscht')}return}
+ const lg=e.target.closest('[data-load-game]');if(lg){const g=state.savedGames.find(x=>x.id===lg.dataset.loadGame);if(g){state.game=JSON.parse(JSON.stringify(g));delete state.game.roster;ensureStats();history=[];persist();renderLive();document.querySelector('[data-tab="live"]').click();toast('Spiel geladen')}return}
+ const eg=e.target.closest('[data-export-game]');if(eg){const g=state.savedGames.find(x=>x.id===eg.dataset.exportGame);if(g)csvFor(g,g.roster||state.roster);return}
+ const dg=e.target.closest('[data-delete-game]');if(dg){
+  const id=dg.dataset.deleteGame;
+  const g=state.savedGames.find(x=>x.id===id);
+  if(g && confirm(`Gespeichertes Spiel gegen „${g.opponent||'ohne Gegner'}“ vom ${g.date||'ohne Datum'} wirklich löschen?`)){
+   state.savedGames=state.savedGames.filter(x=>x.id!==id);
+   persist();renderSaved();toast('Gespeichertes Spiel gelöscht');
+  }
+  return
+ }
+});
+document.getElementById('opponent').addEventListener('input',e=>{state.game.opponent=e.target.value;markDirty()});
+document.getElementById('gameDate').addEventListener('change',e=>{state.game.date=e.target.value;markDirty()});
+document.getElementById('newGame').onclick=newGame;
+document.getElementById('saveGame').onclick=saveGame;
+document.getElementById('undo').onclick=()=>{if(!history.length){toast('Nichts rückgängig zu machen');return}const s=history.pop();restoreSnapshot(s);toast('Letzte Aktion rückgängig')};
+document.getElementById('addPlayer').onclick=()=>{
+ const name=document.getElementById('newName').value.trim(),number=document.getElementById('newNumber').value.trim();
+ if(!name){toast('Bitte Namen eingeben');return}
+ if(state.roster.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast('Spieler bereits vorhanden');return}
+ const p={id:uid(),name,number:number||'–'};state.roster.push(p);state.game.stats[p.id]=emptyStats();document.getElementById('newName').value='';document.getElementById('newNumber').value='';persist();renderAll();toast('Spieler hinzugefügt');
+};
+document.getElementById('clearRoster').onclick=()=>{if(confirm('Wirklich den gesamten Kader löschen?')){state.roster=[];state.game.stats={};persist();renderAll();toast('Kader gelöscht')}};
+document.getElementById('exportCurrent').onclick=()=>csvFor(state.game,state.roster);
+document.getElementById('rosterList').addEventListener('change',e=>{
+ const id=e.target.dataset.editName||e.target.dataset.editNumber;if(!id)return;const p=state.roster.find(x=>x.id===id);if(!p)return;
+ if(e.target.dataset.editName)p.name=e.target.value.trim()||p.name;else p.number=e.target.value.trim()||'–';persist();renderLive();renderRoster();
+});
+if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('./sw.js').catch(()=>{});
+load();
+</script>
+</body>
+</html>
