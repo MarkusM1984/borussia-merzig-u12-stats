@@ -34,7 +34,7 @@
 <div id="app" class="hidden">
 <header><div class="head"><div><h1>🏀 Borussia Merzig U12</h1><div class="sub" id="status">Verbunden</div></div><button onclick="logout()" style="background:#ffffff22;color:white">Abmelden</button></div></header>
 <main>
-<div class="tabs"><button id="tLive" class="active" onclick="tab('live')">🏀 SPIEL</button><button id="tGames" onclick="tab('games')">📂 SPIELE</button><button id="tSeason" onclick="tab('season')">📊 SAISON</button></div>
+<div class="tabs"><button id="tLive" class="active" onclick="tab('live')">🏀 SPIEL</button><button id="tGames" onclick="tab('games')">📂 SPIELE</button><button id="tSeason" onclick="tab('season')">📊 SAISON</button><button id="tRoster" onclick="tab('roster')">👥 KADER</button></div>
 
 <section id="live">
 <div class="card"><div class="between row"><div><b id="title">Kein Spiel geöffnet</b><div id="meta" class="muted"></div></div><button class="primary" onclick="showNewGame()">+ Neues Spiel</button></div>
@@ -46,7 +46,7 @@
 <section id="games" class="hidden"><div class="card"><h2 style="margin-top:0">Gespeicherte Spiele</h2><div id="gamesList"></div></div></section>
 <section id="season" class="hidden"><div class="card"><h2 style="margin-top:0">Saisonübersicht</h2><div id="seasonBox" class="muted">Wird geladen …</div></div></section>
 
-<section id="roster" class="hidden"></section>
+<section id="roster" class="hidden"><div class="card"><h2 style="margin-top:0">Kader Borussia Merzig U12</h2><div class="muted">Spieler einmal anlegen. Der Kader ist für alle Trainer mit demselben Login gemeinsam verfügbar.</div><div class="grid2" style="margin-top:10px"><div><label>Trikotnummer</label><input id="newNumber" inputmode="numeric" placeholder="z. B. 7"></div><div><label>Name</label><input id="newName" placeholder="Vor- und Nachname"></div></div><button class="primary" style="width:100%;margin-top:10px" onclick="addPlayer()">+ Spieler hinzufügen</button><div id="rosterList" style="margin-top:12px"></div></div></section>
 </main></div>
 <div id="toast" class="toast"></div>
 
@@ -81,16 +81,16 @@ async function doLogin(){
  $('login').classList.add('hidden');$('app').classList.remove('hidden');await startApp();
 }
 async function logout(){await sb.auth.signOut();if(timer)clearInterval(timer);$('app').classList.add('hidden');$('login').classList.remove('hidden')}
-async function startApp(){await loadPlayers();await loadGames();await loadSeason();$('status').textContent='☁ Gemeinsame Cloud-Daten';timer=setInterval(refreshCurrent,5000)}
+async function startApp(){await loadPlayers();renderRoster();await loadGames();await loadSeason();$('status').textContent='☁ Gemeinsame Cloud-Daten';timer=setInterval(refreshCurrent,5000)}
 async function loadPlayers(){
  const {data,error}=await sb.from('players').select('*').eq('active',true).order('number',{ascending:true});
  if(error){toast('Spieler konnten nicht geladen werden');return} players=data||[];
 }
 function tab(name){
- ['live','games','season'].forEach(x=>$(x).classList.toggle('hidden',x!==name));
- ['tLive','tGames','tSeason'].forEach(x=>$(x).classList.remove('active'));
- ({live:'tLive',games:'tGames',season:'tSeason'}[name]&&$(('t'+name.charAt(0).toUpperCase()+name.slice(1)))?.classList.add('active'));
- if(name==='games')loadGames();if(name==='season')loadSeason();
+ ['live','games','season','roster'].forEach(x=>$(x).classList.toggle('hidden',x!==name));
+ ['tLive','tGames','tSeason','tRoster'].forEach(x=>$(x).classList.remove('active'));
+ const id={live:'tLive',games:'tGames',season:'tSeason',roster:'tRoster'}[name];if(id)$(id).classList.add('active');
+ if(name==='games')loadGames();if(name==='season')loadSeason();if(name==='roster')loadPlayers().then(renderRoster);
 }
 function showNewGame(){ $('newGameBox').classList.toggle('hidden');$('date').value=new Date().toISOString().slice(0,10)}
 async function createGame(){
@@ -119,10 +119,19 @@ function setEighth(n){currentEighth=n;renderLive()}
 function playerHTML(p,s){
  return `<div class="player"><div class="phead"><div class="pname"><span class="num">#${esc(p.number)}</span> ${esc(p.name)}</div><div class="muted">Achtel: <b>${s.eighths||0}</b></div></div>
  <div class="stats"><div class="stat"><b>${s.eighths||0}</b><span>Achtel</span></div><div class="stat"><b>${s.points||0}</b><span>Pkt</span></div><div class="stat"><b>${s.threes||0}</b><span>3er</span></div><div class="stat"><b>${s.rebounds||0}</b><span>REB</span></div><div class="stat"><b>${s.assists||0}</b><span>AST</span></div><div class="stat"><b>${s.turnovers||0}</b><span>TO</span></div><div class="stat"><b>${s.fouls||0}</b><span>Foul</span></div></div>
- <div class="actions"><button onclick="addStat('${p.id}','eighths',1)">+ A</button><button onclick="addStat('${p.id}','points',1)">+1</button><button onclick="addStat('${p.id}','points',2)">+2</button><button class="plus3" onclick="addThree('${p.id}')">+3 / 3er</button><button onclick="addStat('${p.id}','rebounds',1)">REB +</button><button onclick="addStat('${p.id}','assists',1)">AST +</button><button onclick="addStat('${p.id}','turnovers',1)">TO +</button><button onclick="addStat('${p.id}','fouls',1)">FOUL +</button></div></div>`}
+ <div class="actions"><button onclick="addEighth('${p.id}')">+ A</button><button onclick="addStat('${p.id}','points',1)">+1</button><button onclick="addStat('${p.id}','points',2)">+2</button><button class="plus3" onclick="addThree('${p.id}')">+3 / 3er</button><button onclick="addStat('${p.id}','rebounds',1)">REB +</button><button onclick="addStat('${p.id}','assists',1)">AST +</button><button onclick="addStat('${p.id}','turnovers',1)">TO +</button><button onclick="addStat('${p.id}','fouls',1)">FOUL +</button></div></div>`}
 async function getStat(pid){
  const {data,error}=await sb.from('player_stats').select('*').eq('game_id',currentGame.id).eq('player_id',pid).maybeSingle();
  if(error)throw error;return data||{game_id:currentGame.id,player_id:pid,eighths:0,points:0,threes:0,rebounds:0,assists:0,turnovers:0,fouls:0};
+}
+async function addEighth(pid){
+ try{const {data,error}=await sb.from('player_stats').select('*').eq('game_id',currentGame.id).eq('player_id',pid).maybeSingle();if(error)throw error;
+ const s=data||{game_id:currentGame.id,player_id:pid,eighths:0,points:0,threes:0,rebounds:0,assists:0,turnovers:0,fouls:0};
+ const key='merzig_u12_eighth_'+currentGame.id+'_'+pid;const played=JSON.parse(localStorage.getItem(key)||'[]');
+ if(played.includes(currentEighth)){toast('Dieses Achtel ist bereits gezählt');return}
+ played.push(currentEighth);localStorage.setItem(key,JSON.stringify(played));s.eighths=(s.eighths||0)+1;delete s.id;delete s.created_at;
+ const {error:upErr}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(upErr)throw upErr;await renderLive(true);toast('Achtel gezählt');
+ }catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
 }
 async function addStat(pid,field,n){
  try{const s=await getStat(pid);s[field]=Math.max(0,(s[field]||0)+n);delete s.id;delete s.created_at;const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(error)throw error;await renderLive(true);toast('Gespeichert')}
@@ -131,6 +140,29 @@ async function addStat(pid,field,n){
 async function addThree(pid){
  try{const s=await getStat(pid);s.points=(s.points||0)+3;s.threes=(s.threes||0)+1;delete s.id;delete s.created_at;const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(error)throw error;await renderLive(true);toast('+3 Punkte / 3er')}
  catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
+}
+function renderRoster(){
+ const el=$('rosterList');if(!el)return;
+ if(!players.length){el.innerHTML='<div class="muted">Noch keine Spieler angelegt.</div>';return}
+ el.innerHTML=players.map(p=>'<div class="rosterrow"><input value="'+esc(p.number||'')+'" onchange="editPlayer(\''+p.id+'\',\'number\',this.value)"><input value="'+esc(p.name)+'" onchange="editPlayer(\''+p.id+'\',\'name\',this.value)"><button class="danger" onclick="deletePlayer(\''+p.id+'\')">×</button></div>').join('');
+}
+async function addPlayer(){
+ const name=$('newName').value.trim(),number=$('newNumber').value.trim();
+ if(!name){toast('Bitte Namen eingeben');return}
+ const {error}=await sb.from('players').insert({name,number:number||null,active:true});
+ if(error){toast('Spieler konnte nicht angelegt werden: '+error.message);return}
+ $('newName').value='';$('newNumber').value='';await loadPlayers();renderRoster();toast('Spieler hinzugefügt');
+}
+async function editPlayer(id,field,value){
+ value=value.trim();if(!value)return;const payload={};payload[field]=field==='number'?(value||null):value;
+ const {error}=await sb.from('players').update(payload).eq('id',id);if(error){toast('Änderung konnte nicht gespeichert werden');return}
+ await loadPlayers();renderRoster();
+}
+async function deletePlayer(id){
+ const p=players.find(x=>x.id===id);if(!p)return;
+ if(!confirm('Spieler wirklich aus dem Kader entfernen? Er bleibt in bereits gespeicherten Statistiken erhalten.'))return;
+ const {error}=await sb.from('players').update({active:false}).eq('id',id);if(error){toast('Spieler konnte nicht entfernt werden');return}
+ await loadPlayers();renderRoster();toast('Spieler entfernt');
 }
 async function loadGames(){
  const {data,error}=await sb.from('games').select('*').order('game_date',{ascending:false});
