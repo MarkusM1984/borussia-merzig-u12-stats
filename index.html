@@ -152,12 +152,39 @@ async function addEighth(pid){
  }catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
 }
 async function addStat(pid,field,n){
- try{const s=await getStat(pid);s[field]=Math.max(0,(s[field]||0)+n);delete s.id;delete s.created_at;const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(error)throw error;await renderLive(true);toast('Gespeichert')}
- catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
+ try{
+   if(!currentGame)throw new Error('Kein Spiel geöffnet.');
+   const s=await getStat(pid);
+   s[field]=Math.max(0,(s[field]||0)+n);
+   delete s.id;delete s.created_at;
+   const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});
+   if(error)throw error;
+   await renderLive(true);
+   toast('Gespeichert');
+ }catch(e){
+   console.error('addStat:',e);
+   toast('Speichern fehlgeschlagen: '+(e.message||e));
+   const box=$('liveStats');
+   if(box) box.insertAdjacentHTML('afterbegin','<div class="notice error"><b>Speicherfehler:</b> '+esc(e.message||e)+'</div>');
+ }
 }
 async function addThree(pid){
- try{const s=await getStat(pid);s.points=(s.points||0)+3;s.threes=(s.threes||0)+1;delete s.id;delete s.created_at;const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(error)throw error;await renderLive(true);toast('+3 Punkte / 3er')}
- catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
+ try{
+   if(!currentGame)throw new Error('Kein Spiel geöffnet.');
+   const s=await getStat(pid);
+   s.points=(s.points||0)+3;
+   s.threes=(s.threes||0)+1;
+   delete s.id;delete s.created_at;
+   const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});
+   if(error)throw error;
+   await renderLive(true);
+   toast('+3 Punkte / 3er');
+ }catch(e){
+   console.error('addThree:',e);
+   toast('Speichern fehlgeschlagen: '+(e.message||e));
+   const box=$('liveStats');
+   if(box) box.insertAdjacentHTML('afterbegin','<div class="notice error"><b>Speicherfehler:</b> '+esc(e.message||e)+'</div>');
+ }
 }
 function renderRoster(){
  const el=$('rosterList');if(!el)return;
