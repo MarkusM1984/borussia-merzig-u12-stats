@@ -81,15 +81,27 @@ async function doLogin(){
  $('login').classList.add('hidden');$('app').classList.remove('hidden');await startApp();
 }
 async function logout(){await sb.auth.signOut();if(timer)clearInterval(timer);$('app').classList.add('hidden');$('login').classList.remove('hidden')}
-async function startApp(){await loadPlayers();renderRoster();await loadGames();await loadSeason();$('status').textContent='☁ Gemeinsame Cloud-Daten';timer=setInterval(refreshCurrent,5000)}
+async function startApp(){
+ const ok=await loadPlayers();
+ renderRoster();
+ await loadGames();
+ await loadSeason();
+ $('status').textContent=ok?'☁ Gemeinsame Cloud-Daten · Kader '+players.length:'⚠ Cloud-Verbindung prüfen';
+ timer=setInterval(refreshCurrent,5000)
+}
 async function loadPlayers(){
- const {data,error}=await sb.from('players').select('*').eq('active',true).order('number',{ascending:true});
+ const el=$('rosterList');
+ if(el) el.innerHTML='<div class="muted">☁ Kader wird aus der Cloud geladen …</div>';
+ const {data,error}=await sb.from('players').select('id,name,number,active').order('number',{ascending:true});
  if(error){
    console.error('loadPlayers:',error);
+   if(el) el.innerHTML='<div class="notice error">Kader konnte nicht geladen werden: '+esc(error.message)+'</div>';
    toast('Kader konnte nicht geladen werden: '+error.message);
+   players=[];
    return false;
  }
- players=data||[];
+ players=(data||[]).filter(p=>p.active!==false);
+ console.log('Kader geladen:',players.length,players);
  return true;
 }
 function tab(name){
@@ -193,6 +205,18 @@ async function loadSeason(){
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').classList.remove('show'),1500)}
-init();
+async function cleanupOldPwa(){
+ try{
+   if('serviceWorker' in navigator){
+     const regs=await navigator.serviceWorker.getRegistrations();
+     await Promise.all(regs.map(r=>r.unregister()));
+   }
+   if(window.caches){
+     const keys=await caches.keys();
+     await Promise.all(keys.map(k=>caches.delete(k)));
+   }
+ }catch(e){console.warn('PWA-Bereinigung:',e)}
+}
+cleanupOldPwa().finally(init);
 </script>
 </body></html>
