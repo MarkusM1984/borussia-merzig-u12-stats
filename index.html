@@ -84,7 +84,13 @@ async function logout(){await sb.auth.signOut();if(timer)clearInterval(timer);$(
 async function startApp(){await loadPlayers();renderRoster();await loadGames();await loadSeason();$('status').textContent='☁ Gemeinsame Cloud-Daten';timer=setInterval(refreshCurrent,5000)}
 async function loadPlayers(){
  const {data,error}=await sb.from('players').select('*').eq('active',true).order('number',{ascending:true});
- if(error){toast('Spieler konnten nicht geladen werden');return} players=data||[];
+ if(error){
+   console.error('loadPlayers:',error);
+   toast('Kader konnte nicht geladen werden: '+error.message);
+   return false;
+ }
+ players=data||[];
+ return true;
 }
 function tab(name){
  ['live','games','season','roster'].forEach(x=>$(x).classList.toggle('hidden',x!==name));
@@ -154,7 +160,10 @@ async function addPlayer(){
  if(!name){toast('Bitte Namen eingeben');return}
  const {error}=await sb.from('players').insert({name,number:number||null,active:true});
  if(error){toast('Spieler konnte nicht angelegt werden: '+error.message);return}
- $('newName').value='';$('newNumber').value='';await loadPlayers();renderRoster();toast('Spieler hinzugefügt');
+ $('newName').value='';$('newNumber').value='';
+ const ok=await loadPlayers();
+ renderRoster();
+ if(ok) toast('Spieler hinzugefügt');
 }
 async function deletePlayer(id){
  const p=players.find(x=>x.id===id);if(!p)return;
