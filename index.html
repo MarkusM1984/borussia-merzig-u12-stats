@@ -144,7 +144,10 @@ async function addThree(pid){
 function renderRoster(){
  const el=$('rosterList');if(!el)return;
  if(!players.length){el.innerHTML='<div class="muted">Noch keine Spieler angelegt.</div>';return}
- el.innerHTML=players.map(p=>'<div class="rosterrow"><input value="'+esc(p.number||'')+'" onchange="editPlayer(\''+p.id+'\',\'number\',this.value)"><input value="'+esc(p.name)+'" onchange="editPlayer(\''+p.id+'\',\'name\',this.value)"><button class="danger" onclick="deletePlayer(\''+p.id+'\')">×</button></div>').join('');
+ el.innerHTML=players.map(function(p){
+   const id=JSON.stringify(p.id);
+   return '<div class="rosterrow"><input value="'+esc(p.number||'')+'" disabled><input value="'+esc(p.name)+'" disabled><button class="danger" onclick="deletePlayer('+id+')">×</button></div>';
+ }).join('');
 }
 async function addPlayer(){
  const name=$('newName').value.trim(),number=$('newNumber').value.trim();
@@ -153,15 +156,11 @@ async function addPlayer(){
  if(error){toast('Spieler konnte nicht angelegt werden: '+error.message);return}
  $('newName').value='';$('newNumber').value='';await loadPlayers();renderRoster();toast('Spieler hinzugefügt');
 }
-async function editPlayer(id,field,value){
- value=value.trim();if(!value)return;const payload={};payload[field]=field==='number'?(value||null):value;
- const {error}=await sb.from('players').update(payload).eq('id',id);if(error){toast('Änderung konnte nicht gespeichert werden');return}
- await loadPlayers();renderRoster();
-}
 async function deletePlayer(id){
  const p=players.find(x=>x.id===id);if(!p)return;
  if(!confirm('Spieler wirklich aus dem Kader entfernen? Er bleibt in bereits gespeicherten Statistiken erhalten.'))return;
- const {error}=await sb.from('players').update({active:false}).eq('id',id);if(error){toast('Spieler konnte nicht entfernt werden');return}
+ const {error}=await sb.from('players').update({active:false}).eq('id',id);
+ if(error){toast('Spieler konnte nicht entfernt werden');return}
  await loadPlayers();renderRoster();toast('Spieler entfernt');
 }
 async function loadGames(){
