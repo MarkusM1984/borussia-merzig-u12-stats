@@ -65,7 +65,11 @@ function cfg(){
  if(!url||!key){msg('Bitte Project URL und Publishable Key eintragen.',true);return}
  if(!window.supabase){msg('Supabase-Bibliothek konnte nicht geladen werden. Internetverbindung prüfen und Seite neu laden.',true);return}
  localStorage.setItem('merzig_supabase_cfg',JSON.stringify({url,key}));
- location.reload();
+ sb=window.supabase.createClient(url,key);
+ $('setup').classList.add('hidden');
+ $('login').classList.remove('hidden');
+ $('loginMsg').textContent='Verbindung gespeichert. Jetzt anmelden.';
+ $('pass').value='Sergej';
 }
 function resetConfig(){
  try{localStorage.removeItem('merzig_supabase_cfg')}catch(e){}
