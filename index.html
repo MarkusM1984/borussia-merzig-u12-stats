@@ -203,11 +203,14 @@ async function addPlayer(){
  if(ok) toast('Spieler hinzugefügt');
 }
 async function deletePlayer(id){
- const p=players.find(x=>x.id===id);if(!p)return;
- if(!confirm('Spieler wirklich aus dem Kader entfernen? Er bleibt in bereits gespeicherten Statistiken erhalten.'))return;
+ const p=players.find(x=>x.id===id);if(!p){toast('Spieler nicht gefunden');return}
  const {error}=await sb.from('players').update({active:false}).eq('id',id);
- if(error){toast('Spieler konnte nicht entfernt werden');return}
- await loadPlayers();renderRoster();toast('Spieler entfernt');
+ if(error){
+   console.error('deletePlayer:',error);
+   toast('Löschen fehlgeschlagen: '+(error.message||error));
+   return;
+ }
+ await loadPlayers();renderRoster();toast(p.name+' entfernt');
 }
 async function loadGames(){
  const {data,error}=await sb.from('games').select('*').order('game_date',{ascending:false});
