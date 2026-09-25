@@ -18,19 +18,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install sharp
+      - run: npm install --no-save sharp
       - name: Generate PNG icons
         run: |
           node <<'NODE'
           const sharp = require('sharp');
           const fs = require('fs');
-          const svg = fs.readFileSync('icon.svg');
-          Promise.all([
-            sharp(svg).resize(180,180).png().toFile('icon-180.png'),
-            sharp(svg).resize(192,192).png().toFile('icon-192.png'),
-            sharp(svg).resize(512,512).png().toFile('icon-512.png')
-          ]).then(() => console.log('Icons generated.'));
+
+          (async () => {
+            const svg = fs.readFileSync('icon.svg');
+            await Promise.all([
+              sharp(svg).resize(180,180).png().toFile('icon-180.png'),
+              sharp(svg).resize(192,192).png().toFile('icon-192.png'),
+              sharp(svg).resize(512,512).png().toFile('icon-512.png')
+            ]);
+            console.log('Icons generated.');
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
           NODE
+      - name: Verify generated icons
+        run: |
+          file icon-180.png icon-192.png icon-512.png
+          test -s icon-180.png
+          test -s icon-192.png
+          test -s icon-512.png
       - name: Commit generated icons
         run: |
           git config user.name "github-actions[bot]"
