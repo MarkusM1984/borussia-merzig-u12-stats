@@ -188,9 +188,14 @@ function renderRoster(){
  const el=$('rosterList');if(!el)return;
  if(!players.length){el.innerHTML='<div class="muted">Noch keine Spieler angelegt.</div>';return}
  el.innerHTML=players.map(function(p){
-   const id=JSON.stringify(p.id);
-   return '<div class="rosterrow"><input value="'+esc(p.number||'')+'" disabled><input value="'+esc(p.name)+'" disabled><button class="danger" onclick="deletePlayer('+id+')">×</button></div>';
+   return '<div class="rosterrow"><input value="'+esc(p.number||'')+'" disabled><input value="'+esc(p.name)+'" disabled><button type="button" class="danger roster-delete" data-player-id="'+esc(p.id)+'">×</button></div>';
  }).join('');
+ el.querySelectorAll('.roster-delete').forEach(function(btn){
+   btn.addEventListener('click',function(){
+     const id=this.getAttribute('data-player-id');
+     deletePlayer(id);
+   });
+ });
 }
 async function addPlayer(){
  const name=$('newName').value.trim(),number=$('newNumber').value.trim();
