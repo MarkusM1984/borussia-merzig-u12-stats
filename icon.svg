@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071c14"/><stop offset="1" stop-color="#001008"/></linearGradient>
+ <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18ff5b"/><stop offset="1" stop-color="#08783f"/></linearGradient>
+ <radialGradient id="ball"><stop stop-color="#ff9b32"/><stop offset=".72" stop-color="#f46b16"/><stop offset="1" stop-color="#a73508"/></radialGradient>
+</defs>
+<rect x="8" y="8" width="496" height="496" rx="82" fill="url(#bg)" stroke="#16e653" stroke-width="12"/>
+<g opacity=".28" stroke="#d9fff0" stroke-width="5" fill="none"><path d="M38 170h130M38 225h130M344 128h128M344 163h128M344 198h128"/><path d="M65 275q55-65 110 0M55 320q65-70 130 0"/></g>
+<circle cx="256" cy="178" r="112" fill="url(#ball)" stroke="#151515" stroke-width="8"/>
+<path d="M150 145q106 55 212 0M159 208q97-53 194 0M205 72q35 105 0 212M307 72q-35 105 0 212" fill="none" stroke="#171717" stroke-width="8"/>
+<ellipse cx="256" cy="292" rx="151" ry="29" fill="none" stroke="#19f25b" stroke-width="14"/>
+<path d="M122 292l20 87M155 298l18 92M190 301l9 95M322 301l-9 95M357 298l-18 92M390 292l-20 87" stroke="#f4f4f4" stroke-width="8" fill="none"/>
+<path d="M142 350l31 34 26-33 28 37 29-36 29 36 28-37 26 33 31-34" fill="none" stroke="#f4f4f4" stroke-width="7"/>
+<path d="M74 404h364q14 0 14 14v32q0 14-14 14H74q-14 0-14-14v-32q0-14 14-14z" fill="#020806" stroke="#19f25b" stroke-width="5"/>
+<text x="256" y="438" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="45" font-weight="900" fill="#fff" letter-spacing="2">BORUSSIA</text>
+<text x="256" y="473" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="25" font-weight="900" fill="#19f25b" letter-spacing="5">MERZIG U12</text>
+</svg>
