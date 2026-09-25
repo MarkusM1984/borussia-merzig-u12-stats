@@ -56,14 +56,26 @@ const PROJECT_DEFAULT='https://sfabhslwfwmtrkoafslw.supabase.co', BUILTIN_KEY='D
 
 const $=id=>document.getElementById(id);
 const msg=(s,e=false)=>{$('setupMsg').textContent=s;$('setupMsg').className='muted center'+(e?' error':'')};
-function cfg(){try{const saved=JSON.parse(localStorage.getItem('merzig_supabase_cfg')||'null');if(saved&&saved.key)return saved}catch(e){}return {url:PROJECT_DEFAULT,key:BUILTIN_KEY}}function saveConfig(){
+function cfg(){
+ try{const saved=JSON.parse(localStorage.getItem('merzig_supabase_cfg')||'null');if(saved&&saved.key&&saved.key.startsWith('sb_publishable_'))return saved}catch(e){}
+ if(BUILTIN_KEY&&BUILTIN_KEY!=='DEIN_KEY'&&BUILTIN_KEY.startsWith('sb_publishable_'))return {url:PROJECT_DEFAULT,key:BUILTIN_KEY};
+ return null;
+}function saveConfig(){
  const url=$('setupUrl').value.trim(),key=$('setupKey').value.trim();
  if(!url||!key){msg('Bitte Project URL und Publishable Key eintragen.',true);return}
  if(!window.supabase){msg('Supabase-Bibliothek konnte nicht geladen werden. Internetverbindung prüfen und Seite neu laden.',true);return}
  localStorage.setItem('merzig_supabase_cfg',JSON.stringify({url,key}));
  location.reload();
 }
-function resetConfig(){localStorage.removeItem('merzig_supabase_cfg');if(timer)clearInterval(timer);location.reload()}
+function resetConfig(){
+ try{localStorage.removeItem('merzig_supabase_cfg')}catch(e){}
+ if(timer)clearInterval(timer);
+ $('app').classList.add('hidden');
+ $('login').classList.add('hidden');
+ $('setup').classList.remove('hidden');
+ $('setupKey').value='';
+ msg('Bitte den Publishable Key erneut eintragen.');
+}
 function init(){
  const c=cfg();
  if(!c){$('setup').classList.remove('hidden');$('login').classList.add('hidden');return}
