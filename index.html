@@ -63,7 +63,7 @@ function cfg(){try{const saved=JSON.parse(localStorage.getItem('merzig_supabase_
  localStorage.setItem('merzig_supabase_cfg',JSON.stringify({url,key}));
  location.reload();
 }
-function resetConfig(){localStorage.removeItem('merzig_supabase_cfg');if(timer)clearInterval(timer);location.reload()}
+function resetConfig(){try{localStorage.removeItem('merzig_supabase_cfg')}catch(e){}if(timer)clearInterval(timer);$('app').classList.add('hidden');$('login').classList.add('hidden');$('setup').classList.remove('hidden');$('setupKey').value='';msg('Bitte Publishable Key erneut eintragen.')}
 function init(){
  const c=cfg();
  if(!c){$('setup').classList.remove('hidden');$('login').classList.add('hidden');return}
