@@ -52,7 +52,7 @@ F<!doctype html>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const PROJECT_DEFAULT='https://sfabhslwfwmtrkoafslw.supabase.co', BUILTIN_KEY='DEIN_KEY', TECH_EMAIL='borussiamerzig@u12.local';let sb=null,currentGame=null,currentEighth=1,players=[],timer=null;
+const PROJECT_DEFAULT='https://sfabhslwfwmtrkoafslw.supabase.co', BUILTIN_KEY='DEIN_KEY', TECH_EMAIL='borussiamerzig@u12.local';let sb=null,currentGame=null,currentEighth=1,players=[],timer=null,lastAction=null;
 
 const $=id=>document.getElementById(id);
 const msg=(s,e=false)=>{$('setupMsg').textContent=s;$('setupMsg').className='muted center'+(e?' error':'')};
@@ -125,7 +125,7 @@ async function renderLive(silent=false){
  $('title').textContent=(currentGame.opponent||'Spiel ohne Gegner');
  $('meta').textContent=(currentGame.game_date||'')+(currentGame.location?' · '+currentGame.location:'');
  $('eighthBox').classList.remove('hidden');renderEighths();
- let html='<div class="between row"><div><b>Spielerstatistik</b><div class="muted">Jeder Klick wird direkt in der Cloud gespeichert.</div></div><button class="secondary" onclick="renderLive()">↻ Aktualisieren</button></div>';
+ let html='<div class="between row"><div><b>Spielerstatistik</b><div class="muted">Jeder Klick wird direkt in der Cloud gespeichert.</div></div><div class="row"><button class="secondary" onclick="undoLast()">↩ Rückgängig</button><button class="secondary" onclick="renderLive()">↻ Aktualisieren</button></div></div>';
  if(!players.length)html+='<div class="notice" style="margin-top:10px">Noch keine Spieler vorhanden.</div>';
  players.forEach(p=>{const s=map[p.id]||{eighths:0,points:0,threes:0,rebounds:0,assists:0,turnovers:0,fouls:0};html+=playerHTML(p,s)});
  $('liveStats').innerHTML=html;
@@ -136,6 +136,34 @@ function playerHTML(p,s){
  return `<div class="player"><div class="phead"><div class="pname"><span class="num">#${esc(p.number)}</span> ${esc(p.name)}</div><div class="muted">Achtel: <b>${s.eighths||0}</b></div></div>
  <div class="stats"><div class="stat"><b>${s.eighths||0}</b><span>Achtel</span></div><div class="stat"><b>${s.points||0}</b><span>Pkt</span></div><div class="stat"><b>${s.threes||0}</b><span>3er</span></div><div class="stat"><b>${s.rebounds||0}</b><span>REB</span></div><div class="stat"><b>${s.assists||0}</b><span>AST</span></div><div class="stat"><b>${s.turnovers||0}</b><span>TO</span></div><div class="stat"><b>${s.fouls||0}</b><span>Foul</span></div></div>
  <div class="actions"><button onclick="addEighth('${p.id}')">+ A</button><button onclick="addStat('${p.id}','points',1)">+1</button><button onclick="addStat('${p.id}','points',2)">+2</button><button class="plus3" onclick="addThree('${p.id}')">+3 / 3er</button><button onclick="addStat('${p.id}','rebounds',1)">REB +</button><button onclick="addStat('${p.id}','assists',1)">AST +</button><button onclick="addStat('${p.id}','turnovers',1)">TO +</button><button onclick="addStat('${p.id}','fouls',1)">FOUL +</button></div></div>`}
+async function undoLast(){
+ try{
+   if(!currentGame){toast('Kein Spiel geöffnet.');return}
+   if(!lastAction){toast('Nichts zum Rückgängigmachen.');return}
+   const a=lastAction;
+   const s=await getStat(a.pid);
+   if(a.type==='eighth'){
+     if((s.eighths||0)<=0){toast('Nichts zum Rückgängigmachen.');lastAction=null;return}
+     s.eighths=Math.max(0,(s.eighths||0)-1);
+     const key='merzig_u12_eighth_'+currentGame.id+'_'+a.pid;
+     const played=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==a.eighth);
+     localStorage.setItem(key,JSON.stringify(played));
+   }else if(a.type==='three'){
+     s.points=Math.max(0,(s.points||0)-3);s.threes=Math.max(0,(s.threes||0)-1);
+   }else if(a.type==='stat'){
+     s[a.field]=Math.max(0,(s[a.field]||0)-a.amount);
+   }
+   delete s.id;delete s.created_at;
+   const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});
+   if(error)throw error;
+   lastAction=null;
+   await renderLive(true);
+   toast('Letzte Aktion rückgängig gemacht');
+ }catch(e){
+   console.error('undoLast:',e);
+   toast('Rückgängig fehlgeschlagen: '+(e.message||e));
+ }
+}
 async function getStat(pid){
  const {data,error}=await sb.from('player_stats').select('*').eq('game_id',currentGame.id).eq('player_id',pid).maybeSingle();
  if(error)throw error;return data||{game_id:currentGame.id,player_id:pid,eighths:0,points:0,threes:0,rebounds:0,assists:0,turnovers:0,fouls:0};
@@ -146,7 +174,9 @@ async function addEighth(pid){
  const key='merzig_u12_eighth_'+currentGame.id+'_'+pid;const played=JSON.parse(localStorage.getItem(key)||'[]');
  if(played.includes(currentEighth)){toast('Dieses Achtel ist bereits gezählt');return}
  played.push(currentEighth);localStorage.setItem(key,JSON.stringify(played));s.eighths=(s.eighths||0)+1;delete s.id;delete s.created_at;
- const {error:upErr}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(upErr)throw upErr;await renderLive(true);toast('Achtel gezählt');
+ const {error:upErr}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});if(upErr)throw upErr;
+ lastAction={type:'eighth',pid:pid,eighth:currentEighth};
+ await renderLive(true);toast('Achtel gezählt');
  }catch(e){toast('Speichern fehlgeschlagen: '+e.message)}
 }
 async function addStat(pid,field,n){
@@ -157,6 +187,7 @@ async function addStat(pid,field,n){
    delete s.id;delete s.created_at;
    const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});
    if(error)throw error;
+   lastAction={type:'stat',pid:pid,field:field,amount:n};
    await renderLive(true);
    toast('Gespeichert');
  }catch(e){
@@ -175,6 +206,7 @@ async function addThree(pid){
    delete s.id;delete s.created_at;
    const {error}=await sb.from('player_stats').upsert(s,{onConflict:'game_id,player_id'});
    if(error)throw error;
+   lastAction={type:'three',pid:pid};
    await renderLive(true);
    toast('+3 Punkte / 3er');
  }catch(e){
